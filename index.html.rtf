@@ -1,0 +1,197 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2757
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 <!DOCTYPE html>\
+<html lang="en">\
+<head>\
+  <meta charset="UTF-8">\
+  <title>Hangman Game - FMCSA</title>\
+  <style>\
+    body \{\
+      font-family: Arial, sans-serif;\
+      margin: 20px;\
+    \}\
+    #alphabet button \{\
+      margin: 2px;\
+      padding: 8px;\
+      font-size: 16px;\
+    \}\
+    #displayPhrase \{\
+      font-size: 24px;\
+      letter-spacing: 4px;\
+      margin-bottom: 20px;\
+    \}\
+    #message \{\
+      font-weight: bold;\
+      margin-top: 20px;\
+    \}\
+    canvas \{\
+      border: 1px solid #ccc;\
+      margin-top: 20px;\
+    \}\
+  </style>\
+</head>\
+<body>\
+  <h1>Hangman Game</h1>\
+  <p><strong>Hint:</strong> What does FMCSA stand for?</p>\
+  <p id="displayPhrase"></p>\
+  <p id="wrongGuesses">Wrong guesses: 0</p>\
+  <div id="alphabet"></div>\
+  <canvas id="hangmanCanvas" width="200" height="250"></canvas>\
+  <p id="message"></p>\
+\
+  <!-- EmailJS library -->\
+  <script type="text/javascript" src="https://cdn.emailjs.com/dist/email.min.js"></script>\
+  <script type="text/javascript">\
+    // Initialize EmailJS using Service_WMF as the user ID\
+    (function()\{\
+      emailjs.init("Service_WMF");\
+    \})();\
+\
+    // Game variables\
+    const phrase = "Federal Motor Carrier Safety Administration".toUpperCase();\
+    let displayedPhrase = "";\
+    let wrongGuesses = 0;\
+    let totalGuesses = 0;\
+    let guessedLetters = [];\
+    const maxWrong = 6; // head, body, left arm, right arm, left leg, right leg\
+\
+    const canvas = document.getElementById('hangmanCanvas');\
+    const ctx = canvas.getContext('2d');\
+\
+    // Draw the gallows and hangman body parts based on wrong guesses\
+    function drawHangman(wrongGuesses) \{\
+      // Clear canvas\
+      ctx.clearRect(0, 0, canvas.width, canvas.height);\
+      // Draw gallows\
+      ctx.beginPath();\
+      ctx.moveTo(10,240);\
+      ctx.lineTo(190,240);\
+      ctx.moveTo(50,240);\
+      ctx.lineTo(50,20);\
+      ctx.lineTo(120,20);\
+      ctx.lineTo(120,40);\
+      ctx.stroke();\
+\
+      // Draw body parts according to the number of wrong guesses\
+      if(wrongGuesses > 0) \{ // head\
+        ctx.beginPath();\
+        ctx.arc(120, 60, 20, 0, Math.PI * 2, true);\
+        ctx.stroke();\
+      \}\
+      if(wrongGuesses > 1) \{ // body\
+        ctx.beginPath();\
+        ctx.moveTo(120,80);\
+        ctx.lineTo(120,140);\
+        ctx.stroke();\
+      \}\
+      if(wrongGuesses > 2) \{ // left arm\
+        ctx.beginPath();\
+        ctx.moveTo(120,100);\
+        ctx.lineTo(90,120);\
+        ctx.stroke();\
+      \}\
+      if(wrongGuesses > 3) \{ // right arm\
+        ctx.beginPath();\
+        ctx.moveTo(120,100);\
+        ctx.lineTo(150,120);\
+        ctx.stroke();\
+      \}\
+      if(wrongGuesses > 4) \{ // left leg\
+        ctx.beginPath();\
+        ctx.moveTo(120,140);\
+        ctx.lineTo(90,180);\
+        ctx.stroke();\
+      \}\
+      if(wrongGuesses > 5) \{ // right leg\
+        ctx.beginPath();\
+        ctx.moveTo(120,140);\
+        ctx.lineTo(150,180);\
+        ctx.stroke();\
+      \}\
+    \}\
+\
+    // Update the phrase display showing guessed letters and underscores\
+    function updateDisplayedPhrase() \{\
+      displayedPhrase = "";\
+      for (let i = 0; i < phrase.length; i++) \{\
+        let char = phrase[i];\
+        if(char === " ") \{\
+          displayedPhrase += " ";\
+        \} else if(guessedLetters.includes(char)) \{\
+          displayedPhrase += char;\
+        \} else \{\
+          displayedPhrase += "_";\
+        \}\
+      \}\
+      document.getElementById("displayPhrase").textContent = displayedPhrase;\
+    \}\
+\
+    // Check if the game has been won or lost\
+    function checkGameStatus() \{\
+      if(displayedPhrase === phrase) \{\
+        document.getElementById("message").textContent = "Congratulations! You guessed the phrase in " + totalGuesses + " guesses.";\
+        sendScore(totalGuesses);\
+      \} else if(wrongGuesses >= maxWrong) \{\
+        document.getElementById("message").textContent = "Game Over! The phrase was: " + phrase;\
+      \}\
+    \}\
+\
+    // Send the score via email using EmailJS\
+    function sendScore(score) \{\
+      const templateParams = \{\
+        to_email: "baitchison@wellingtonmotorfreight.com",\
+        score: score,\
+        phrase: phrase\
+      \};\
+      emailjs.send("Service_WMF", "Service_WMF", templateParams)\
+        .then(function(response) \{\
+          console.log('SUCCESS!', response.status, response.text);\
+        \}, function(error) \{\
+          console.log('FAILED...', error);\
+        \});\
+    \}\
+\
+    // Process a letter guess when a button is clicked\
+    function letterClicked(letter) \{\
+      if(guessedLetters.includes(letter)) return;\
+      guessedLetters.push(letter);\
+      totalGuesses++;\
+      if(phrase.includes(letter)) \{\
+        updateDisplayedPhrase();\
+      \} else \{\
+        wrongGuesses++;\
+        document.getElementById("wrongGuesses").textContent = "Wrong guesses: " + wrongGuesses;\
+        drawHangman(wrongGuesses);\
+      \}\
+      checkGameStatus();\
+    \}\
+\
+    // Create letter buttons for the alphabet\
+    function createAlphabetButtons() \{\
+      const alphabetDiv = document.getElementById("alphabet");\
+      const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";\
+      for(let i = 0; i < alphabet.length; i++) \{\
+        let letter = alphabet[i];\
+        let button = document.createElement("button");\
+        button.textContent = letter;\
+        button.onclick = function() \{\
+          letterClicked(letter);\
+          button.disabled = true;\
+        \};\
+        alphabetDiv.appendChild(button);\
+      \}\
+    \}\
+\
+    // Initialize the game\
+    updateDisplayedPhrase();\
+    createAlphabetButtons();\
+    drawHangman(wrongGuesses);\
+  </script>\
+</body>\
+</html>\
+}
